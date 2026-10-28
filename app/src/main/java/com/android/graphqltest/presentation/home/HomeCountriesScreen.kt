@@ -65,8 +65,8 @@ fun HomeCountriesPreview() {
 
 @Composable
 fun HomeCountriesScreen(
-    uiState: CountryUiState,
     modifier: Modifier = Modifier,
+    uiState: CountryUiState,
     onRetry: () -> Unit = {},
     onFavoriteClick: (SimpleCountry) -> Unit = {},
     onVisitedClick: (SimpleCountry) -> Unit = {},
@@ -229,7 +229,7 @@ fun CountryCard(
 
             IconButton(onClick = onFavoriteClick) {
                 Icon(
-K                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = if (isFavorite) "Remove from favourites" else "Add to favourites",
                     tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
