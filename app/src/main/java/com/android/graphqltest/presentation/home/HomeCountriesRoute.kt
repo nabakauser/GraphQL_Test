@@ -12,6 +12,7 @@ fun HomeCountriesRoute(
     val uiState by viewModel.uiState.collectAsState()
 
     HomeCountriesScreen(
-        countryList = uiState.countries
+        uiState = uiState,
+        onRetry = viewModel::getCountries,
     )
 }

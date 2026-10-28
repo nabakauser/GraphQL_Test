@@ -2,12 +2,14 @@ package com.android.graphqltest.presentation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,8 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,36 +65,96 @@ fun HomeCountriesPreview() {
 
 @Composable
 fun HomeCountriesScreen(
+    uiState: CountryUiState,
     modifier: Modifier = Modifier,
-    countryList: List<SimpleCountry>,
+    onRetry: () -> Unit = {},
     onFavoriteClick: (SimpleCountry) -> Unit = {},
     onVisitedClick: (SimpleCountry) -> Unit = {},
     onCountryClick: (SimpleCountry) -> Unit = {},
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize()
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        items(
-            items = countryList,
-            key = { it.code }
-        ) { country ->
-            var isFavorite by remember { mutableStateOf(false) }
-            var isVisited by remember { mutableStateOf(false) }
+        when {
+            // Loading State
+            uiState.isLoading -> {
+                CircularProgressIndicator()
+            }
 
-            CountryCard(
-                country = country,
-                isFavorite = isFavorite,
-                isVisited = isVisited,
-                onFavoriteClick = {
-                    isFavorite = !isFavorite
-                    onFavoriteClick(country)
-                },
-                onVisitedClick = {
-                    isVisited = !isVisited
-                    onVisitedClick(country)
-                },
-                onClick = { onCountryClick(country) }
-            )
+            // Error State
+            uiState.error != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onRetry) {
+                        Text(text = "Retry")
+                    }
+                }
+            }
+
+            // Empty State
+            uiState.isEmpty -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "No countries available.",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onRetry) {
+                        Text(text = "Refresh")
+                    }
+                }
+            }
+
+            // Success State
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        items = uiState.countries,
+                        key = { it.code }
+                    ) { country ->
+                        var isFavorite by remember { mutableStateOf(value = false) }
+                        var isVisited by remember { mutableStateOf(value = false) }
+
+                        CountryCard(
+                            country = country,
+                            isFavorite = isFavorite,
+                            isVisited = isVisited,
+                            onFavoriteClick = {
+                                isFavorite = !isFavorite
+                                onFavoriteClick(country)
+                            },
+                            onVisitedClick = {
+                                isVisited = !isVisited
+                                onVisitedClick(country)
+                            },
+                            onClick = { onCountryClick(country) }
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -123,7 +188,6 @@ fun CountryCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Flag emoji inside a circular background
             Box(
                 modifier = Modifier
                     .size(52.dp)
@@ -139,7 +203,6 @@ fun CountryCard(
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            // Country Name and Capital
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -156,41 +219,19 @@ fun CountryCard(
                 )
             }
 
-            // Visited Icon Button
             IconButton(onClick = onVisitedClick) {
                 Icon(
                     imageVector = Icons.Default.Explore,
-                    contentDescription = if (isVisited) {
-                        "Mark as not visited"
-                    } else {
-                        "Mark as visited"
-                    },
-                    tint = if (isVisited) {
-                        Color(0xFF2E7D32)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    contentDescription = if (isVisited) "Mark as not visited" else "Mark as visited",
+                    tint = if (isVisited) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Favorite Heart Icon Button
             IconButton(onClick = onFavoriteClick) {
                 Icon(
-                    imageVector = if (isFavorite) {
-                        Icons.Filled.Favorite
-                    } else {
-                        Icons.Outlined.FavoriteBorder
-                    },
-                    contentDescription = if (isFavorite) {
-                        "Remove from favourites"
-                    } else {
-                        "Add to favourites"
-                    },
-                    tint = if (isFavorite) {
-                        Color(0xFFE53935)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+K                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = if (isFavorite) "Remove from favourites" else "Add to favourites",
+                    tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
