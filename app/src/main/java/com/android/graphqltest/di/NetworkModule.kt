@@ -1,6 +1,7 @@
 package com.android.graphqltest.di
 
 import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.network.okHttpClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,9 +17,12 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideApolloClient(): ApolloClient {
+    fun provideApolloClient(
+        okHttpClient: OkHttpClient
+    ): ApolloClient {
         return ApolloClient.Builder()
             .serverUrl("https://countries.trevorblades.com/graphql")
+            .okHttpClient(okHttpClient)
             .build()
     }
 
