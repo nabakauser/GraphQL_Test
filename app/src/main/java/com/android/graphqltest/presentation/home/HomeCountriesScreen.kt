@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,23 +43,13 @@ import com.android.graphqltest.domain.model.SimpleCountry
 @Preview(showBackground = true)
 @Composable
 fun HomeCountriesPreview() {
-//    HomeCountriesScreen(
-//        countryList = listOf(
-//            SimpleCountry(
-//                code = "IN",
-//                name = "India",
-//                capital = "Delhi",
-//                emoji = "🇮🇳"
-//            )
-//        )
-//    )
-    CountryItem(
+    CountryCard(
         country = SimpleCountry(
-                code = "IN",
-                name = "India",
-                capital = "Delhi",
-                emoji = "🇮🇳"
-            ),
+            code = "IN",
+            name = "India",
+            capital = "Delhi",
+            emoji = "🇮🇳"
+        ),
         isFavorite = true,
         isVisited = true,
         onFavoriteClick = {},
@@ -64,30 +60,52 @@ fun HomeCountriesPreview() {
 
 @Composable
 fun HomeCountriesScreen(
+    modifier: Modifier = Modifier,
     countryList: List<SimpleCountry>,
+    onFavoriteClick: (SimpleCountry) -> Unit = {},
+    onVisitedClick: (SimpleCountry) -> Unit = {},
+    onCountryClick: (SimpleCountry) -> Unit = {},
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxSize()
     ) {
-//        items(countryList) { country ->
-//            Row(modifier = Modifier.fillMaxWidth()) {
-//                Text(text = country.name)
-//            }
-//        }
+        items(
+            items = countryList,
+            key = { it.code }
+        ) { country ->
+            var isFavorite by remember { mutableStateOf(false) }
+            var isVisited by remember { mutableStateOf(false) }
+
+            CountryCard(
+                country = country,
+                isFavorite = isFavorite,
+                isVisited = isVisited,
+                onFavoriteClick = {
+                    isFavorite = !isFavorite
+                    onFavoriteClick(country)
+                },
+                onVisitedClick = {
+                    isVisited = !isVisited
+                    onVisitedClick(country)
+                },
+                onClick = { onCountryClick(country) }
+            )
+        }
     }
 }
 
 @Composable
-fun CountryItem(
+fun CountryCard(
     country: SimpleCountry,
     isFavorite: Boolean,
     isVisited: Boolean,
     onFavoriteClick: () -> Unit,
     onVisitedClick: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clickable { onClick() },
@@ -105,21 +123,23 @@ fun CountryItem(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Flag emoji inside a circular background
             Box(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = country.emoji ?: "",
-                    fontSize = 38.sp
+                    fontSize = 28.sp
                 )
             }
 
             Spacer(modifier = Modifier.width(14.dp))
 
+            // Country Name and Capital
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -136,9 +156,8 @@ fun CountryItem(
                 )
             }
 
-            IconButton(
-                onClick = onVisitedClick
-            ) {
+            // Visited Icon Button
+            IconButton(onClick = onVisitedClick) {
                 Icon(
                     imageVector = Icons.Default.Explore,
                     contentDescription = if (isVisited) {
@@ -154,9 +173,8 @@ fun CountryItem(
                 )
             }
 
-            IconButton(
-                onClick = onFavoriteClick
-            ) {
+            // Favorite Heart Icon Button
+            IconButton(onClick = onFavoriteClick) {
                 Icon(
                     imageVector = if (isFavorite) {
                         Icons.Filled.Favorite
