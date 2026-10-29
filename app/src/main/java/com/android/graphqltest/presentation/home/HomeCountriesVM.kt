@@ -1,6 +1,5 @@
 package com.android.graphqltest.presentation.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.graphqltest.domain.model.SimpleCountry
@@ -33,7 +32,6 @@ class HomeCountriesVM @Inject constructor(
 
             try {
                 val countries = repository.getCountries()
-                Log.d("HomeCountriesVM", "test: ${countries.size}")
                 _uiState.update {
                     it.copy(
                         isLoading = false,
