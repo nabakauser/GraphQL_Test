@@ -18,6 +18,16 @@ class CountryRepositoryImpl @Inject constructor(
         val response = apolloClient
             .query(CountriesQuery())
             .execute()
+
+        response.exception?.let { throw it }
+        response.errors
+            ?.takeIf { errors -> errors.isNotEmpty() }
+            ?.let { errors ->
+                throw IllegalStateException(
+                    errors.joinToString(separator = "\n") { error -> error.message }
+                )
+            }
+
         return response.data?.countries?.map {
             it.toSimpleCountry()
         } ?: emptyList()

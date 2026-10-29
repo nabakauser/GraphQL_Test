@@ -12,6 +12,14 @@ fun HomeCountriesRoute(
     val uiState by viewModel.uiState.collectAsState()
 
     HomeCountriesScreen(
-        countryList = uiState.countries
+        countryList = uiState.countries,
+        isLoading = uiState.isLoading,
+        error = uiState.error,
+        favoriteCountryCodes = uiState.favoriteCountryCodes,
+        visitedCountryCodes = uiState.visitedCountryCodes,
+        onFavoriteClick = viewModel::toggleFavorite,
+        onVisitedClick = viewModel::toggleVisited,
+        onRetry = viewModel::getCountries,
+        onCountryClick = {}
     )
 }

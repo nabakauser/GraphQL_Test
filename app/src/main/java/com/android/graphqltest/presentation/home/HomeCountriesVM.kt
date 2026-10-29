@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.android.graphqltest.domain.model.SimpleCountry
 import com.android.graphqltest.domain.repository.CountryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -17,13 +18,11 @@ class HomeCountriesVM @Inject constructor(
     private val repository: CountryRepository
 ): ViewModel() {
 
-    private val _uiState = MutableStateFlow(CountryUiState())
+    private val _uiState = MutableStateFlow(CountryUiState(isLoading = true))
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            getCountries()
-        }
+        getCountries()
     }
 
     fun getCountries() {
@@ -42,6 +41,8 @@ class HomeCountriesVM @Inject constructor(
                         error = null
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -52,10 +53,38 @@ class HomeCountriesVM @Inject constructor(
             }
         }
     }
+
+    fun toggleFavorite(countryCode: String) {
+        _uiState.update { state ->
+            val favoriteCodes = state.favoriteCountryCodes
+            state.copy(
+                favoriteCountryCodes = if (countryCode in favoriteCodes) {
+                    favoriteCodes - countryCode
+                } else {
+                    favoriteCodes + countryCode
+                }
+            )
+        }
+    }
+
+    fun toggleVisited(countryCode: String) {
+        _uiState.update { state ->
+            val visitedCodes = state.visitedCountryCodes
+            state.copy(
+                visitedCountryCodes = if (countryCode in visitedCodes) {
+                    visitedCodes - countryCode
+                } else {
+                    visitedCodes + countryCode
+                }
+            )
+        }
+    }
 }
 
 data class CountryUiState(
     val isLoading: Boolean = false,
     val countries: List<SimpleCountry> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val favoriteCountryCodes: Set<String> = emptySet(),
+    val visitedCountryCodes: Set<String> = emptySet()
 )

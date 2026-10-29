@@ -6,19 +6,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,7 +53,7 @@ fun HomeCountriesPreview() {
 //            )
 //        )
 //    )
-    CountryItem(
+    CountryCard(
         country = SimpleCountry(
                 code = "IN",
                 name = "India",
@@ -65,20 +71,89 @@ fun HomeCountriesPreview() {
 @Composable
 fun HomeCountriesScreen(
     countryList: List<SimpleCountry>,
+    isLoading: Boolean,
+    error: String?,
+    favoriteCountryCodes: Set<String>,
+    visitedCountryCodes: Set<String>,
+    onFavoriteClick: (String) -> Unit,
+    onVisitedClick: (String) -> Unit,
+    onRetry: () -> Unit,
+    onCountryClick: (SimpleCountry) -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-//        items(countryList) { country ->
-//            Row(modifier = Modifier.fillMaxWidth()) {
-//                Text(text = country.name)
-//            }
-//        }
+    when {
+        isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "Loading countries...",
+                        modifier = Modifier.padding(top = 12.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
+        error != null -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Text(
+                        text = error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Button(onClick = onRetry) {
+                        Text(text = "Try again")
+                    }
+                }
+            }
+        }
+
+        countryList.isEmpty() -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No countries found",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        else -> {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(
+                    items = countryList,
+                    key = { country -> country.code }
+                ) { country ->
+                    CountryCard(
+                        country = country,
+                        isFavorite = country.code in favoriteCountryCodes,
+                        isVisited = country.code in visitedCountryCodes,
+                        onFavoriteClick = { onFavoriteClick(country.code) },
+                        onVisitedClick = { onVisitedClick(country.code) },
+                        onClick = { onCountryClick(country) }
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun CountryItem(
+fun CountryCard(
     country: SimpleCountry,
     isFavorite: Boolean,
     isVisited: Boolean,
@@ -109,12 +184,12 @@ fun CountryItem(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = country.emoji ?: "",
-                    fontSize = 38.sp
+                    text = country.emoji ?: "🏳️",
+                    fontSize = 34.sp
                 )
             }
 
@@ -140,7 +215,11 @@ fun CountryItem(
                 onClick = onVisitedClick
             ) {
                 Icon(
-                    imageVector = Icons.Default.Explore,
+                    imageVector = if (isVisited) {
+                        Icons.Filled.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
                     contentDescription = if (isVisited) {
                         "Mark as not visited"
                     } else {
