@@ -13,3 +13,16 @@ query Country($country_code : ID!) {
         }
     }
 }
+
+#query GetCountry {
+#    country(code: "IN") {
+#        name
+#        capital
+#        continent {
+#            name
+#        }
+#        languages {
+#            name
+#        }
+#    }
+#}
